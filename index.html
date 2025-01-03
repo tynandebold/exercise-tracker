@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Exercise Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <style>
+      html {
+        background-color: #f5f5f5;
+      }
+      body {
+        font-family: system-ui;
+        max-width: 950px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .month {
+        margin: 20px 0;
+      }
+      .days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      .day {
+        background-color: white;
+        padding: 10px;
+        border: 1px solid #ccc;
+        min-height: 100px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+      }
+      .workout {
+        background: #f0f0f0;
+        padding: 5px;
+        margin: 5px 0;
+        border-radius: 3px;
+      }
+      .workout-form {
+        border-top: 1px solid darkgray;
+        padding-top: 15px;
+        margin-top: 10px;
+        flex-direction: column;
+        display: flex;
+      }
+      .workout-form input {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const YearView = () => {
+        const [workouts, setWorkouts] = React.useState(() => {
+          const saved = localStorage.getItem("workouts");
+          return saved ? JSON.parse(saved) : {};
+        });
+
+        React.useEffect(() => {
+          localStorage.setItem("workouts", JSON.stringify(workouts));
+        }, [workouts]);
+
+        const months = Array.from({ length: 12 }, (_, i) => i);
+
+        return (
+          <div>
+            <h1>Exercise Tracker {new Date().getFullYear()}</h1>
+            {months.map((month) => (
+              <MonthCalendar
+                key={month}
+                month={month}
+                setWorkouts={setWorkouts}
+                workouts={workouts}
+              />
+            ))}
+          </div>
+        );
+      };
+
+      const MonthCalendar = ({ month, workouts, setWorkouts }) => {
+        const year = new Date().getFullYear();
+        const getDaysInMonth = (year, month) =>
+          new Date(year, month + 1, 0).getDate();
+        const getFirstDayOfMonth = (year, month) =>
+          new Date(year, month, 1).getDay();
+
+        const addWorkout = (day, workout, value) => {
+          const key = `${year}-${month}-${day}`;
+
+          setWorkouts((prev) => ({
+            ...prev,
+            [key]: [...(prev[key] || []), { workout, value }],
+          }));
+        };
+
+        const renderDays = () => {
+          const days = [];
+          const daysInMonth = getDaysInMonth(year, month);
+          const firstDay = getFirstDayOfMonth(year, month);
+
+          for (let i = 0; i < firstDay; i++) {
+            days.push(<div key={`empty-${i}`} className="day"></div>);
+          }
+
+          for (let day = 1; day <= daysInMonth; day++) {
+            const key = `${year}-${month}-${day}`;
+
+            days.push(
+              <div key={day} className="day">
+                <div>
+                  <strong>{day}</strong>
+                </div>
+                {workouts[key]?.map((w, i) => (
+                  <div key={i} className="workout">
+                    {w.workout}: {w.value}
+                  </div>
+                ))}
+                <WorkoutForm
+                  onSubmit={(workout, value) => addWorkout(day, workout, value)}
+                />
+              </div>
+            );
+          }
+
+          return days;
+        };
+
+        const monthNames = [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ];
+
+        return (
+          <div className="month">
+            <h2>{monthNames[month]}</h2>
+            <div className="days">
+              <strong>Sun</strong>
+              <strong>Mon</strong>
+              <strong>Tue</strong>
+              <strong>Wed</strong>
+              <strong>Thu</strong>
+              <strong>Fri</strong>
+              <strong>Sat</strong>
+            </div>
+            <div className="grid">{renderDays()}</div>
+          </div>
+        );
+      };
+
+      const WorkoutForm = ({ onSubmit }) => {
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          const workout = e.target.workout.value;
+          const value = e.target.value.value;
+          if (workout && value) {
+            onSubmit(workout, value);
+            e.target.reset();
+          }
+        };
+
+        return (
+          <form onSubmit={handleSubmit} className="workout-form">
+            <input name="workout" placeholder="Workout" size="8" required />
+            <input name="value" placeholder="Value" size="8" required />
+            <button type="submit">Add</button>
+          </form>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<YearView />);
+    </script>
+  </body>
+</html>
