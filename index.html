@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
   <head>
     <title>Exercise Tracker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -31,6 +32,21 @@
         border: 1px solid #ccc;
         min-height: 100px;
       }
+      .day-empty {
+        background-color: #f0f0f0;
+        border-color: #ddd;
+      }
+      .day-today {
+        border-color: #9e7a68;
+      }
+      .day-today strong {
+        background: #9e7a68; /* obviously pantone color of the year 2025 */
+        color: #fff;
+        width: 100%;
+        display: block;
+        padding-left: 4px;
+        box-sizing: border-box;
+      }
       .grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -41,6 +57,20 @@
         padding: 5px;
         margin: 5px 0;
         border-radius: 3px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .remove {
+        color: #6f6f6f;
+        border: none;
+        padding: 2px;
+        cursor: pointer;
+      }
+      .remove:hover {
+        color: #333;
+      }
+      .remove::after {
+        content: "\00D7";
       }
       .workout-form {
         border-top: 1px solid darkgray;
@@ -54,6 +84,7 @@
       }
     </style>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="text/babel">
@@ -85,11 +116,13 @@
       };
 
       const MonthCalendar = ({ month, workouts, setWorkouts }) => {
-        const year = new Date().getFullYear();
+        const now = new Date();
+        const year = now.getFullYear();
         const getDaysInMonth = (year, month) =>
           new Date(year, month + 1, 0).getDate();
         const getFirstDayOfMonth = (year, month) =>
           new Date(year, month, 1).getDay();
+        const isMonth = now.getMonth() === month;
 
         const addWorkout = (day, workout, value) => {
           const key = `${year}-${month}-${day}`;
@@ -100,26 +133,39 @@
           }));
         };
 
+        const removeWorkout = (day, index) => {
+          const key = `${year}-${month}-${day}`;
+
+          setWorkouts((prev) => ({
+            ...prev,
+            [key]: prev[key].filter((_, i) => i !== index),
+          }));
+        };
+
         const renderDays = () => {
           const days = [];
           const daysInMonth = getDaysInMonth(year, month);
           const firstDay = getFirstDayOfMonth(year, month);
 
           for (let i = 0; i < firstDay; i++) {
-            days.push(<div key={`empty-${i}`} className="day"></div>);
+            days.push(<div key={`empty-${i}`} className="day day-empty"></div>);
           }
 
           for (let day = 1; day <= daysInMonth; day++) {
             const key = `${year}-${month}-${day}`;
+            const isToday = isMonth && now.getDate() === day;
 
             days.push(
-              <div key={day} className="day">
-                <div>
-                  <strong>{day}</strong>
-                </div>
+              <div key={day} className={isToday ? "day day-today" : "day"}>
+                <strong>{day}</strong>
                 {workouts[key]?.map((w, i) => (
                   <div key={i} className="workout">
                     {w.workout}: {w.value}
+                    <button class="remove" type="button" onClick={() => {
+                      if (confirm(`Are you sure you want to delete "${w.workout}: ${w.value}" on ${monthNames[month]} ${day}, ${year}?`)) {
+                        removeWorkout(day, i)
+                      }
+                    }}></button>
                   </div>
                 ))}
                 <WorkoutForm
@@ -188,4 +234,5 @@
       root.render(<YearView />);
     </script>
   </body>
+
 </html>
