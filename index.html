@@ -152,7 +152,6 @@
             const key = `${year}-${month}-${day}`;
             const isToday = isMonth && now.getDate() === day;
 
-            if (isMonth) console.log(isToday, day)
             days.push(
               <div key={day} className={isToday ? "day day-today" : "day"}>
                 <strong>{day}</strong>
